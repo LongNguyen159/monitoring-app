@@ -10,4 +10,8 @@ import { RouterOutlet } from '@angular/router';
 })
 export class AppComponent {
   title = 'monitoring-app';
+
+  constructor() {
+    console.log('hello world!')
+  }
 }

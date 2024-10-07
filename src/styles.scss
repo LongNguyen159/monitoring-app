@@ -30,8 +30,8 @@
 
     html {
     // Apply the dark theme by default
-    @include mat.core-theme($dark-theme);
-    @include mat.button-theme($dark-theme);
+    @include mat.core-theme($light-theme);
+    @include mat.button-theme($light-theme);
 
     // Apply the light theme only when the user prefers light themes.
     @media (prefers-color-scheme: light) {

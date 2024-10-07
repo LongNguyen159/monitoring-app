@@ -67,12 +67,43 @@ export class AppComponent implements OnInit, OnDestroy {
     })
   }
 
+  saveResponseTimeBufferToFile() {
+    // Convert the responseTimeBuffer array to a string
+    const data = this.responseTimeBuffer.join('\n');  // Each response time on a new line
+    
+    // Create a Blob from the data
+    const blob = new Blob([data], { type: 'text/plain' });
+  
+    // Create a link element for downloading the file
+    const a = document.createElement('a');
+    const url = window.URL.createObjectURL(blob);
+    a.href = url;
+    a.download = 'responseTimeBuffer.txt';
+    
+    // Append the link to the body
+    document.body.appendChild(a);
+    
+    // Trigger the download
+    a.click();
+    
+    // Clean up and remove the link
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+  }
+
 
 
   initChart() {
     this.chartOptions = {
+      title: {
+        text: 'Response Time (ms)'
+      },
       tooltip: {
-        trigger: 'axis'
+        trigger: 'axis',
+        formatter: (params: any) => {
+          const value = params[0].value.toFixed(2); // Rounds to 2 decimal points
+          return `${params[0].name} <br /> <strong>${value} ms</strong>`;
+        }
       },
       xAxis: {
         type: 'category',
@@ -82,7 +113,7 @@ export class AppComponent implements OnInit, OnDestroy {
         type: 'value'
       },
       series: [{
-        data: [150, 230, 224, 218, 135, 147, 260],
+        data: [],
         type: 'line'
       }]
     }

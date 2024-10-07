@@ -19,8 +19,7 @@ export class MonitorService {
             const endTime = performance.now(); // End timer
             const responseTime = endTime - startTime; // Calculate response time
             const statusCode = response.status; // Get HTTP status code
-            const contentSize = response.body?.length; // Size of the response body
-  
+            const contentSize = response.body?.length; // Size of the response body  
             return {
               responseTime,
               statusCode,

@@ -1,11 +1,23 @@
 <router-outlet />
-<h2>Website Monitoring</h2>
-<div *ngIf="metrics">
-  <p><strong>Response Time:</strong> {{ metrics.responseTime }} ms</p>
-  <p><strong>Status Code:</strong> {{ metrics.statusCode }}</p>
-  <p><strong>Content Size:</strong> {{ metrics.contentSize }} bytes</p>
+<div class="p-4">
+  <div class="text-center text-xl mb-4">
+    <h2 class="font-bold">Website Monitoring</h2>
+  </div>
+  <div *ngIf="metrics">
+    <p><strong>Response Time:</strong> {{ metrics.responseTime.toFixed(2) }} ms</p>
+    <p><strong>Status Code:</strong> {{ metrics.statusCode }}</p>
+    <p><strong>Content Size:</strong> {{ metrics.contentSize.toLocaleString() }} bytes</p>
+  </div>
+
+  <div>
+    <app-line-chart></app-line-chart>
+  </div>
+
+  <div
+    echarts
+    [options]="chartOptions"
+    [merge]="mergeOptions"
+  >
+
+  </div>
 </div>
-<mat-slide-toggle>Toggle me!</mat-slide-toggle>
-
-
-<button mat-flat-button>Basic</button>

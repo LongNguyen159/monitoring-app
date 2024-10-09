@@ -41,6 +41,7 @@ export class AppComponent implements OnInit, OnDestroy {
   // Metrics buffer and timestamp buffer
   latestMetrics: SystemMetrics = { cpu_usage: 0, memory: { total: 0, available: 0, used_percent: 0 } };
   metricsBuffer: SystemMetrics[] = [];
+  timestampValue: string = '';
   timestampBuffer: string[] = [];
 
   // User credentials for login
@@ -180,6 +181,7 @@ export class AppComponent implements OnInit, OnDestroy {
         // Add the response data to the buffers
         this.metricsBuffer.push(response);
         const timestamp = new Date().toLocaleTimeString();
+        this.timestampValue = timestamp;
         this.timestampBuffer.push(timestamp);
 
         // Keep the buffer size under control (limit it to 50)
@@ -204,14 +206,14 @@ export class AppComponent implements OnInit, OnDestroy {
   private checkUsageAgainstThresholds(): void {
     // Check if CPU usage exceeds the threshold
     if (this.latestMetrics.cpu_usage > this.cpuThreshold) {
-      const cpuWarning = `Warning: CPU usage is high at ${this.latestMetrics.cpu_usage}%`;
-      this.warningBuffer.push(cpuWarning);
+      const cpuWarning = `Warning [${this.timestampValue}]: CPU usage is high at ${this.latestMetrics.cpu_usage}%`;
+      this.warningBuffer.unshift(cpuWarning);
     }
   
     // Check if RAM usage exceeds the threshold
     if (this.latestMetrics.memory.used_percent > this.ramThreshold) {
-      const ramWarning = `Warning: RAM usage is high at ${this.latestMetrics.memory.used_percent}%`;
-      this.warningBuffer.push(ramWarning);
+      const ramWarning = `Warning [${this.timestampValue}]: RAM usage is high at ${this.latestMetrics.memory.used_percent}%`;
+      this.warningBuffer.unshift(ramWarning);
     }
   }
 

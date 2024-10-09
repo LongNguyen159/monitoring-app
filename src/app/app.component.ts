@@ -45,8 +45,30 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    this.loadBufferFromLocalStorage(); 
     this.initChart();
     this.subscribeToSystemMetrics();
+  }
+
+
+  private saveBufferToLocalStorage(): void {
+    // Convert buffers to JSON strings and store them in localStorage
+    localStorage.setItem('metricsBuffer', JSON.stringify(this.metricsBuffer));
+    localStorage.setItem('timestampBuffer', JSON.stringify(this.timestampBuffer));
+  }
+
+  private loadBufferFromLocalStorage(): void {
+    // Check if there's data in localStorage and load it into the buffers
+    const savedMetricsBuffer = localStorage.getItem('metricsBuffer');
+    const savedTimestampBuffer = localStorage.getItem('timestampBuffer');
+  
+    if (savedMetricsBuffer) {
+      this.metricsBuffer = JSON.parse(savedMetricsBuffer);
+    }
+  
+    if (savedTimestampBuffer) {
+      this.timestampBuffer = JSON.parse(savedTimestampBuffer);
+    }
   }
 
   private initChart(): void {
@@ -70,6 +92,11 @@ export class AppComponent implements OnInit, OnDestroy {
               shadowOffsetX: 0,
               shadowColor: 'rgba(0, 0, 0, 0.5)'
             }
+          },
+          label: {
+            show: true,  // Show labels on the slices
+            formatter: '{b}: {c} GB ({d}%)', // Display name, value, and percentage
+            fontSize: 14,  // Font size for the label text
           }
         }
       ]
@@ -119,6 +146,10 @@ export class AppComponent implements OnInit, OnDestroy {
 
         // Keep the buffer size under control (limit it to 50)
         this._shiftBuffer();
+
+
+        this.saveBufferToLocalStorage();
+
         
         // Update the pie chart with the new data
         this.updateChart();

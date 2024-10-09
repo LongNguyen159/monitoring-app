@@ -1,10 +1,10 @@
 import { Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { MonitorService } from './services/monitor.service';
+import { MonitorService, SystemMetrics } from './services/monitor.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
-import {MatButtonModule} from '@angular/material/button';
+import { MatButtonModule } from '@angular/material/button';
 import { LineChartComponent } from './components/line-chart/line-chart.component';
 import { NgxEchartsDirective, provideEcharts } from 'ngx-echarts';
 import { EChartsOption } from 'echarts';
@@ -12,135 +12,149 @@ import { EChartsOption } from 'echarts';
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, CommonModule, MatSlideToggleModule, MatButtonModule,
-    LineChartComponent, NgxEchartsDirective
-  ],
-  providers: [
-    provideEcharts(),
-  ],
+  imports: [RouterOutlet, CommonModule, MatSlideToggleModule, MatButtonModule, LineChartComponent, NgxEchartsDirective],
+  providers: [provideEcharts()],
   templateUrl: './app.component.html',
-  styleUrl: './app.component.scss'
+  styleUrls: ['./app.component.scss']
 })
 export class AppComponent implements OnInit, OnDestroy {
   title = 'monitoring-app';
 
-  monitoringService = inject(MonitorService)
-  metrics: any;
+  // Inject monitoring service
+  private monitoringService = inject(MonitorService);
 
-  chartOptions: EChartsOption = {}
-  mergeOptions: EChartsOption = {}
+  // Pie chart options for memory usage
+  pieChartOptions: EChartsOption = {};
+  mergedPieOptions: EChartsOption = {};
 
-  userData = {
-    userName: 'admin',
-    password: 'admin123'
-  }
+  // Metrics buffer and timestamp buffer
+  latestMetrics: SystemMetrics = { cpu_usage: 0, memory: { total: 0, available: 0, used_percent: 0 } };
+  metricsBuffer: SystemMetrics[] = [];
+  timestampBuffer: string[] = [];
 
-  responseTimeBuffer: number[] = []
-  timestampBuffer: string[] = []
-
+  // User credentials for login
+  private userData = { userName: 'admin', password: 'admin123' };
 
   constructor() {
+    // Adding a dark theme to the body
     document.body.classList.add('dark-theme');
   }
 
-  ngOnInit() {
-    this.initChart()
-    this.monitoringService.monitorWebsite('/api').subscribe({
-      next: (response) => {
-        console.log('Response received:', response);
-        this.metrics = response
-        this.responseTimeBuffer.push(response.responseTime)
-        const timestamp = new Date().toLocaleTimeString()
-        
-        this.timestampBuffer.push(timestamp)
+  ngOnInit(): void {
+    this.initChart();
+    this.subscribeToSystemMetrics();
+  }
 
-        console.log('Response time buffer:', this.timestampBuffer);
-        if (this.responseTimeBuffer.length > 50) {
-          this.responseTimeBuffer.shift()
-          this.timestampBuffer.shift()
+  private initChart(): void {
+    // Initialize the pie chart for memory usage with default values
+    this.pieChartOptions = {
+      // title: { text: 'Memory Usage (RAM)', left: 'center' },
+      tooltip: {
+        trigger: 'item',
+        formatter: '{a} <br/>{b}: <strong>{c} GB ({d}%)</strong>', // Customize to show two decimals
+      },
+      legend: { orient: 'vertical', left: 'left' },
+      series: [
+        {
+          name: 'Memory Usage',
+          type: 'pie',
+          radius: '50%',
+          data: [],
+          emphasis: {
+            itemStyle: {
+              shadowBlur: 10,
+              shadowOffsetX: 0,
+              shadowColor: 'rgba(0, 0, 0, 0.5)'
+            }
+          }
         }
-        this.updateChart()
+      ]
+    };
+  }
+
+  private subscribeToSystemMetrics(): void {
+    // Subscribing to system metrics from the monitoring service
+    this.monitoringService.getSystemMetrics().subscribe({
+      next: (response: SystemMetrics) => {
+        console.log('Response received:', response);
+        this.latestMetrics = response;
+        // Add the response data to the buffers
+        this.metricsBuffer.push(response);
+        const timestamp = new Date().toLocaleTimeString();
+        this.timestampBuffer.push(timestamp);
+
+        // Keep the buffer size under control (limit it to 50)
+        this._shiftBuffer();
+        
+        // Update the pie chart with the new data
+        this.updateChart();
       },
       error: (err: HttpErrorResponse) => {
         console.error('Error occurred:', err);
       }
-    })
+    });
   }
 
-  saveResponseTimeBufferToFile() {
-    // Convert the responseTimeBuffer array to a string
-    const data = this.responseTimeBuffer.join('\n');  // Each response time on a new line
-    
-    // Create a Blob from the data
-    const blob = new Blob([data], { type: 'text/plain' });
-  
-    // Create a link element for downloading the file
-    const a = document.createElement('a');
-    const url = window.URL.createObjectURL(blob);
-    a.href = url;
-    a.download = 'responseTimeBuffer.txt';
-    
-    // Append the link to the body
-    document.body.appendChild(a);
-    
-    // Trigger the download
-    a.click();
-    
-    // Clean up and remove the link
-    window.URL.revokeObjectURL(url);
-    document.body.removeChild(a);
-  }
-
-
-
-  initChart() {
-    this.chartOptions = {
-      title: {
-        text: 'Response Time (ms)'
-      },
-      tooltip: {
-        trigger: 'axis',
-        formatter: (params: any) => {
-          const value = params[0].value.toFixed(2); // Rounds to 2 decimal points
-          return `${params[0].name} <br /> <strong>${value} ms</strong>`;
-        }
-      },
-      xAxis: {
-        type: 'category',
-        data: this.timestampBuffer
-      },
-      yAxis: {
-        type: 'value'
-      },
-      series: [{
-        data: [],
-        type: 'line'
-      }]
+  private _shiftBuffer(): void {
+    // Ensure that the buffer does not exceed 50 elements
+    if (this.metricsBuffer.length > 50) {
+      this.metricsBuffer.shift();
+      this.timestampBuffer.shift();
     }
   }
 
-  updateChart() {
-    this.mergeOptions = {
-      xAxis: {
-        type: 'category',
-        data: this.timestampBuffer
-      },
-      series: {
-        data: this.responseTimeBuffer
+  private updateChart(): void {
+  this.mergedPieOptions = {
+    series: [
+      {
+        name: 'Memory Usage',
+        type: 'pie',
+        radius: '50%',
+        data: [
+          {
+            value: parseFloat((this.latestMetrics.memory.total * this.latestMetrics.memory.used_percent / 100).toFixed(2)),
+            name: 'Used'
+          },
+          {
+            value: parseFloat((this.latestMetrics.memory.available).toFixed(2)),
+            name: 'Available'
+          }
+        ]
       }
-    }
-  }
+    ]
+  };
+}
 
 
-  login(loginData: any) {
-    if (loginData.userName === this.userData.userName && loginData.password === this.userData) {
+  login(loginData: any): void {
+    // Check user credentials (username & password)
+    if (loginData.userName === this.userData.userName && loginData.password === this.userData.password) {
       console.log('Login successful');
     } else {
       console.log('Username or Password is incorrect');
     }
   }
 
-  ngOnDestroy() {
+  saveResponseTimeBufferToFile(): void {
+    // Save the metrics buffer to a file
+    const data = this.metricsBuffer.map(metric => JSON.stringify(metric)).join('\n');
+    const blob = new Blob([data], { type: 'text/plain' });
+
+    // Create a download link and trigger the download
+    const a = document.createElement('a');
+    const url = window.URL.createObjectURL(blob);
+    a.href = url;
+    a.download = 'metricsBuffer.txt';
+    
+    document.body.appendChild(a);
+    a.click();
+    
+    // Cleanup
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+  }
+
+  ngOnDestroy(): void {
     console.log('AppComponent destroyed');
   }
 }

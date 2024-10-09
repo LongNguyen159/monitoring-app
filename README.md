@@ -4,7 +4,11 @@ This project was generated with [Angular CLI](https://github.com/angular/angular
 
 ## Development server
 
+### Frontend dev server:
 Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The application will automatically reload if you change any of the source files.
+
+### Backend dev server:
+Run `fastapi dev main.py` in `backend` directory to start backend
 
 ## Code scaffolding
 

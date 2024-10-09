@@ -47,6 +47,11 @@ export class MonitorService {
   // }
 
   getSystemMetrics() {
-    return this.http.get<SystemMetrics>(`${this.apiEndpoint}/system`);
+    return interval(5000).pipe(
+      startWith(0),
+      switchMap(() => {
+        return this.http.get<SystemMetrics>(`${this.apiEndpoint}/system`);
+      })
+    )
   }
 }

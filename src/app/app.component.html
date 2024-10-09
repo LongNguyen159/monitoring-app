@@ -21,6 +21,23 @@
     ></div>
   </div>
 
+
+  <div class="mt-10">
+    <div class="flex flex-col w-full items-center justify-center text-gray-800">
+      <h2 class="font-bold text-2xl">
+        CPU Usage in %
+      </h2>
+      <div>
+        <p class="italic text-gray-500">Total memory: {{ latestMetrics.memory.total }} GB</p>
+      </div>
+    </div>
+    <div
+    echarts
+    [options]="lineChartOptions"
+    [merge]="mergedLineChartOption"
+    ></div>
+  </div>
+
   <div class="flex flex-row w-full items-center justify-end">
     <button mat-flat-button color="primary" (click)="saveResponseTimeBufferToFile()">
       Download Logs (.txt)

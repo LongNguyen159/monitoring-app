@@ -27,6 +27,10 @@ export class AppComponent implements OnInit, OnDestroy {
   pieChartOptions: EChartsOption = {};
   mergedPieOptions: EChartsOption = {};
 
+
+  lineChartOptions: EChartsOption = {}
+  mergedLineChartOption: EChartsOption = {}
+
   // Metrics buffer and timestamp buffer
   latestMetrics: SystemMetrics = { cpu_usage: 0, memory: { total: 0, available: 0, used_percent: 0 } };
   metricsBuffer: SystemMetrics[] = [];
@@ -70,6 +74,36 @@ export class AppComponent implements OnInit, OnDestroy {
         }
       ]
     };
+
+
+    this.lineChartOptions = {
+      tooltip: {
+        trigger: 'axis',
+        // formatter: '{b0}: {c0}%', // Format tooltip to show time and CPU usage percentage
+      },
+      xAxis: {
+        type: 'category',
+        data: [], // This will be populated dynamically
+        boundaryGap: false,
+      },
+      yAxis: {
+        type: 'value',
+        axisLabel: {
+          formatter: '{value}%' // Format the Y-axis values as percentages
+        }
+      },
+      series: [
+        {
+          name: 'CPU Usage',
+          type: 'line',
+          smooth: true,
+          data: [], // This will be populated dynamically
+          itemStyle: {
+            color: '#ff7f50' // Set the line color
+          }
+        }
+      ]
+    };
   }
 
   private subscribeToSystemMetrics(): void {
@@ -104,26 +138,44 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   private updateChart(): void {
-  this.mergedPieOptions = {
-    series: [
-      {
-        name: 'Memory Usage',
-        type: 'pie',
-        radius: '50%',
-        data: [
-          {
-            value: parseFloat((this.latestMetrics.memory.total * this.latestMetrics.memory.used_percent / 100).toFixed(2)),
-            name: 'Used'
-          },
-          {
-            value: parseFloat((this.latestMetrics.memory.available).toFixed(2)),
-            name: 'Available'
+    this.mergedPieOptions = {
+      series: [
+        {
+          name: 'Memory Usage',
+          type: 'pie',
+          radius: '50%',
+          data: [
+            {
+              value: parseFloat((this.latestMetrics.memory.total * this.latestMetrics.memory.used_percent / 100).toFixed(2)),
+              name: 'Used'
+            },
+            {
+              value: parseFloat((this.latestMetrics.memory.available).toFixed(2)),
+              name: 'Available'
+            }
+          ]
+        }
+      ]
+    };
+
+    this.mergedLineChartOption = {
+      xAxis: {
+        type: 'category',
+        data: this.timestampBuffer
+      },
+      series: [
+        {
+          name: 'CPU Usage',
+          type: 'line',
+          smooth: true,
+          data: this.metricsBuffer.map(metric => metric.cpu_usage), // Map the CPU usage over time
+          itemStyle: {
+            color: '#ff7f50' // Set the line color for CPU usage
           }
-        ]
-      }
-    ]
-  };
-}
+        }
+      ]
+    };
+  }
 
 
   login(loginData: any): void {

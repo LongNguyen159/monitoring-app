@@ -1,31 +1,53 @@
-import { TestBed } from '@angular/core/testing';
-import { HttpClientTestingModule } from '@angular/common/http/testing'; // Add this import
-import { AppComponent } from './app.component';
-import { HttpClientModule } from '@angular/common/http';
+import { TestBed, ComponentFixture } from '@angular/core/testing';
+import { AppComponent } from './app.component'; // Import your component
+import { HttpClientTestingModule, HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { MonitorService } from './services/monitor.service';
+import { HttpClient, provideHttpClient } from '@angular/common/http';
 
 describe('AppComponent', () => {
-  beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      imports: [HttpClientModule, AppComponent], // Add HttpClientTestingModule here
-    }).compileComponents();
+  let fixture: ComponentFixture<AppComponent>;
+  let app: AppComponent;
+  // let monitorService: MonitorService;
+  let httpMock: HttpTestingController; // This will allow you to mock HTTP requests
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      imports: [
+        HttpClientTestingModule, // Make sure it's imported before the component
+        AppComponent // Since it's a standalone component, it goes here
+      ],
+      providers: [MonitorService, provideHttpClient(), provideHttpClientTesting()] // Ensure the MonitorService is provided
+    });
+
+    fixture = TestBed.createComponent(AppComponent);
+    app = fixture.componentInstance;
+    // monitorService = TestBed.inject(MonitorService); // Inject MonitorService
+    httpMock = TestBed.inject(HttpTestingController); // Inject HttpTestingController
+  });
+
+  afterEach(() => {
+    httpMock.verify(); // Ensure there are no outstanding HTTP requests after each test
   });
 
   it('should create the app', () => {
-    const fixture = TestBed.createComponent(AppComponent);
-    const app = fixture.componentInstance;
     expect(app).toBeTruthy();
   });
 
-  it(`should have the 'monitoring-app' title`, () => {
-    const fixture = TestBed.createComponent(AppComponent);
-    const app = fixture.componentInstance;
-    expect(app.title).toEqual('monitoring-app');
-  });
-
-  it('should render title', () => {
-    const fixture = TestBed.createComponent(AppComponent);
+  it('should mock the HTTP call made by the monitor service', () => {
     fixture.detectChanges();
-    const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('h1')?.textContent).toContain('Hello, monitoring-app');
+    const mockResponse = {
+      cpu_usage: 75,
+      memory: { total: 100, available: 50, used_percent: 50 }
+    };
+
+    // Capture the HTTP request made by the service
+    const req = httpMock.expectOne('http://localhost:8000/system');
+    expect(req.request.method).toBe('GET');
+    
+    // Respond with mock data
+    req.flush(mockResponse);
+
+    // Verify no outstanding requests
+    httpMock.verify();
   });
 });

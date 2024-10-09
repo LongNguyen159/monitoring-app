@@ -23,13 +23,20 @@ export class AppComponent implements OnInit, OnDestroy {
   // Inject monitoring service
   private monitoringService = inject(MonitorService);
 
-  // Pie chart options for memory usage
-  pieChartOptions: EChartsOption = {};
-  mergedPieOptions: EChartsOption = {};
+  ramPieOptions: EChartsOption = {};
+  mergedRamPieOptions: EChartsOption = {};
+
+  cpuLineChartOptions: EChartsOption = {}
+  cpuMergedLineChartOption: EChartsOption = {}
+
+  ramLineChartOptions: EChartsOption = {}
+  ramMergedLineChartOption: EChartsOption = {}
 
 
-  lineChartOptions: EChartsOption = {}
-  mergedLineChartOption: EChartsOption = {}
+
+  private cpuThreshold = 60; // CPU usage threshold (in percentage)
+  private ramThreshold = 50; // RAM usage threshold (in percentage)
+  warningBuffer: string[] = [];
 
   // Metrics buffer and timestamp buffer
   latestMetrics: SystemMetrics = { cpu_usage: 0, memory: { total: 0, available: 0, used_percent: 0 } };
@@ -73,7 +80,7 @@ export class AppComponent implements OnInit, OnDestroy {
 
   private initChart(): void {
     // Initialize the pie chart for memory usage with default values
-    this.pieChartOptions = {
+    this.ramPieOptions = {
       // title: { text: 'Memory Usage (RAM)', left: 'center' },
       tooltip: {
         trigger: 'item',
@@ -103,7 +110,7 @@ export class AppComponent implements OnInit, OnDestroy {
     };
 
 
-    this.lineChartOptions = {
+    this.cpuLineChartOptions = {
       tooltip: {
         trigger: 'axis',
         // formatter: '{b0}: {c0}%', // Format tooltip to show time and CPU usage percentage
@@ -131,6 +138,37 @@ export class AppComponent implements OnInit, OnDestroy {
         }
       ]
     };
+
+    this.ramLineChartOptions = {
+      tooltip: {
+        trigger: 'axis',
+        // formatter: '{b0}: {c0}%', // Format tooltip to show time and CPU usage percentage
+      },
+      xAxis: {
+        type: 'category',
+        data: [], // This will be populated dynamically
+        boundaryGap: false,
+      },
+      yAxis: {
+        type: 'value',
+        axisLabel: {
+          formatter: '{value}%' // Format the Y-axis values as percentages
+        }
+      },
+      series: [
+        {
+          name: 'RAM Usage',
+          type: 'line',
+          smooth: true,
+          data: [], // This will be populated dynamically
+          // itemStyle: {
+          //   color: '#ff7f50' // Set the line color
+          // }
+        }
+      ]
+    };
+
+
   }
 
   private subscribeToSystemMetrics(): void {
@@ -150,7 +188,9 @@ export class AppComponent implements OnInit, OnDestroy {
 
         this.saveBufferToLocalStorage();
 
-        
+        this.checkUsageAgainstThresholds();
+
+
         // Update the pie chart with the new data
         this.updateChart();
       },
@@ -158,6 +198,21 @@ export class AppComponent implements OnInit, OnDestroy {
         console.error('Error occurred:', err);
       }
     });
+  }
+
+
+  private checkUsageAgainstThresholds(): void {
+    // Check if CPU usage exceeds the threshold
+    if (this.latestMetrics.cpu_usage > this.cpuThreshold) {
+      const cpuWarning = `Warning: CPU usage is high at ${this.latestMetrics.cpu_usage}%`;
+      this.warningBuffer.push(cpuWarning);
+    }
+  
+    // Check if RAM usage exceeds the threshold
+    if (this.latestMetrics.memory.used_percent > this.ramThreshold) {
+      const ramWarning = `Warning: RAM usage is high at ${this.latestMetrics.memory.used_percent}%`;
+      this.warningBuffer.push(ramWarning);
+    }
   }
 
   private _shiftBuffer(): void {
@@ -169,7 +224,7 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   private updateChart(): void {
-    this.mergedPieOptions = {
+    this.mergedRamPieOptions = {
       series: [
         {
           name: 'Memory Usage',
@@ -189,7 +244,7 @@ export class AppComponent implements OnInit, OnDestroy {
       ]
     };
 
-    this.mergedLineChartOption = {
+    this.cpuMergedLineChartOption = {
       xAxis: {
         type: 'category',
         data: this.timestampBuffer
@@ -206,6 +261,24 @@ export class AppComponent implements OnInit, OnDestroy {
         }
       ]
     };
+
+    this.ramMergedLineChartOption = {
+      xAxis: {
+        type: 'category',
+        data: this.timestampBuffer
+      },
+      series: [
+        {
+          name: 'RAM Usage',
+          type: 'line',
+          smooth: true,
+          data: this.metricsBuffer.map(metric => metric.memory.used_percent), // Map the RAM usage over time
+          // itemStyle: {
+          //   color: '#ff7f50' // Set the line color for RAM usage
+          // }
+        }
+      ]
+    }
   }
 
 

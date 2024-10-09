@@ -4,41 +4,69 @@
     <h2 class="font-bold text-2xl text-gray-800">System Metrics Monitoring</h2>
   </div>
 
-  
-  <div class="mt-10">
-    <div class="flex flex-col w-full items-center justify-center text-gray-800">
-      <h2 class="font-bold text-2xl">
-        Memory Usage
-      </h2>
-      <div>
-        <p class="italic text-gray-500">Total memory: {{ latestMetrics.memory.total }} GB</p>
-      </div>
-    </div>
-    <div
-    echarts
-    [options]="pieChartOptions"
-    [merge]="mergedPieOptions"
-    ></div>
-  </div>
-
-
-  <div class="mt-10">
-    <div class="flex flex-col w-full items-center justify-center text-gray-800">
-      <h2 class="font-bold text-2xl">
-        CPU Usage in %
-      </h2>
-    </div>
-    <div
-    echarts
-    [options]="lineChartOptions"
-    [merge]="mergedLineChartOption"
-    ></div>
-  </div>
 
   <div class="flex flex-row w-full items-center justify-end">
     <button mat-flat-button color="primary" (click)="saveResponseTimeBufferToFile()">
       Download Logs (.txt)
     </button>
-  </div>  
+  </div>
+
+  
+  <div class="mt-10 grid grid-cols-3 gap-4 w-full items-start justify-center">
+    <!-- chart section (2fr) -->
+    <div class="col-span-2 flex flex-col items-center justify-center text-gray-800">
+      <div class="flex flex-col items-center justify-center text-gray-800 mb-4">
+        <h2 class="font-bold text-2xl">
+          Memory Usage
+        </h2>
+        <p class="italic text-gray-500">Total memory: {{ latestMetrics.memory.total }} GB</p>
+      </div>
+      <div
+        echarts
+        [options]="ramPieOptions"
+        [merge]="mergedRamPieOptions"
+        style="height: 400px; width: 100%;"
+      ></div>
+    </div>
+  
+    <!-- system warnings section (1fr) -->
+    <div *ngIf="true" class="h-80 overflow-auto p-4 pt-0 border rounded-lg bg-white shadow">
+      <h3 class="font-bold text-xl mb-2 py-4 sticky top-0 bg-white z-10">System Warnings</h3>
+      <ul class="list-disc pl-5">
+        <li *ngFor="let warning of warningBuffer">{{ warning }}</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="flex flex-row w-full">
+    <div class="mt-10 w-[50%]">
+      <div class="flex flex-col w-full items-center justify-center text-gray-800">
+        <h2 class="font-bold text-2xl">
+          CPU Usage in %
+        </h2>
+      </div>
+      <div
+      echarts
+      [options]="cpuLineChartOptions"
+      [merge]="cpuMergedLineChartOption"
+      style="height: 400px; width: 100%;"
+      ></div>
+    </div>
+    <div class="mt-10 w-[50%]">
+      <div class="flex flex-col w-full items-center justify-center text-gray-800">
+        <h2 class="font-bold text-2xl">
+          RAM Usage in %
+        </h2>
+      </div>
+      <div
+      echarts
+      [options]="ramLineChartOptions"
+      [merge]="ramMergedLineChartOption"
+      style="height: 400px; width: 100%;"
+      ></div>
+    </div>
+  </div>
+
+  
 </div>
 

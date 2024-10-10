@@ -7,21 +7,19 @@ import { HttpClient, provideHttpClient } from '@angular/common/http';
 describe('AppComponent', () => {
   let fixture: ComponentFixture<AppComponent>;
   let app: AppComponent;
-  // let monitorService: MonitorService;
   let httpMock: HttpTestingController; // This will allow you to mock HTTP requests
 
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [
-        HttpClientTestingModule, // Make sure it's imported before the component
-        AppComponent // Since it's a standalone component, it goes here
+        HttpClientTestingModule,
+        AppComponent
       ],
       providers: [MonitorService, provideHttpClient(), provideHttpClientTesting()] // Ensure the MonitorService is provided
     });
 
     fixture = TestBed.createComponent(AppComponent);
     app = fixture.componentInstance;
-    // monitorService = TestBed.inject(MonitorService); // Inject MonitorService
     httpMock = TestBed.inject(HttpTestingController); // Inject HttpTestingController
   });
 

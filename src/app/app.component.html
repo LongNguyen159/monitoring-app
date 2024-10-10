@@ -1,70 +1,112 @@
 <router-outlet />
 <div class="p-4">
-  <div class="text-center text-xl mb-4">
-    <h2 class="font-bold text-2xl text-gray-800">System Metrics Monitoring</h2>
+  <!-- LOGIN -->
+  <div class="flex flex-col items-center justify-center h-screen" *ngIf="!isLoggedIn">
+    <h2 class="font-bold text-2xl mb-4 text-gray-800">Login</h2>
+    <form (ngSubmit)="login(loginForm.value)" #loginForm="ngForm" class="w-1/3">
+      <div class="mb-4">
+        <label for="userName" class="block text-gray-700">Username</label>
+        <input
+          type="text"
+          id="userName"
+          name="userName"
+          [(ngModel)]="loginData.userName"
+          class="w-full px-4 py-2 border rounded-lg"
+          required
+        />
+      </div>
+
+      <div class="mb-4">
+        <label for="password" class="block text-gray-700">Password</label>
+        <input
+          type="password"
+          id="password"
+          name="password"
+          [(ngModel)]="loginData.password"
+          class="w-full px-4 py-2 border rounded-lg"
+          required
+        />
+      </div>
+
+      <button
+        type="submit"
+        mat-flat-button
+        color="primary"
+        class="w-full py-2"
+      >
+        Login
+      </button>
+
+      <p class="text-red-500 mt-4" *ngIf="loginFailed">Username or Password is incorrect</p>
+    </form>
   </div>
 
 
-  <div class="flex flex-row w-full items-center justify-end">
-    <button mat-flat-button color="primary" (click)="saveResponseTimeBufferToFile()">
-      Download Logs (.txt)
-    </button>
-  </div>
+  <!-- CONTENTS -->
+  <div class="p-4" *ngIf="isLoggedIn">
+    <div class="text-center text-xl mb-4">
+      <h2 class="font-bold text-2xl text-gray-800">System Metrics Monitoring</h2>
+    </div>
+    <div class="flex flex-row w-full items-center justify-end">
+      <button mat-flat-button color="primary" (click)="saveResponseTimeBufferToFile()">
+        Download Logs (.txt)
+      </button>
+    </div>
 
   
-  <div class="mt-10 grid grid-cols-3 gap-4 w-full items-start justify-center">
-    <!-- chart section (2fr) -->
-    <div class="col-span-2 flex flex-col items-center justify-center text-gray-800">
-      <div class="flex flex-col items-center justify-center text-gray-800 mb-4">
-        <h2 class="font-bold text-2xl">
-          Memory Usage
-        </h2>
-        <p class="italic text-gray-500">Total memory: {{ latestMetrics.memory.total }} GB</p>
+    <div class="mt-10 grid grid-cols-3 gap-4 w-full items-start justify-center">
+      <!-- chart section (2fr) -->
+      <div class="col-span-2 flex flex-col items-center justify-center text-gray-800">
+        <div class="flex flex-col items-center justify-center text-gray-800 mb-4">
+          <h2 class="font-bold text-2xl">
+            Memory Usage
+          </h2>
+          <p class="italic text-gray-500">Total memory: {{ latestMetrics.memory.total }} GB</p>
+        </div>
+        <div
+          echarts
+          [options]="ramPieOptions"
+          [merge]="mergedRamPieOptions"
+          style="height: 400px; width: 100%;"
+        ></div>
       </div>
-      <div
+    
+      <!-- system warnings section (1fr) -->
+      <div *ngIf="true" class="h-80 overflow-auto p-4 pt-0 border rounded-lg bg-white shadow">
+        <h3 class="font-bold text-xl mb-2 py-4 sticky top-0 bg-white z-10">System Warnings</h3>
+        <ul class="list-disc pl-5">
+          <li *ngFor="let warning of warningBuffer">{{ warning }}</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="flex flex-row w-full">
+      <div class="mt-10 w-[50%]">
+        <div class="flex flex-col w-full items-center justify-center text-gray-800">
+          <h2 class="font-bold text-2xl">
+            CPU Usage in %
+          </h2>
+        </div>
+        <div
         echarts
-        [options]="ramPieOptions"
-        [merge]="mergedRamPieOptions"
+        [options]="cpuLineChartOptions"
+        [merge]="cpuMergedLineChartOption"
         style="height: 400px; width: 100%;"
-      ></div>
-    </div>
-  
-    <!-- system warnings section (1fr) -->
-    <div *ngIf="true" class="h-80 overflow-auto p-4 pt-0 border rounded-lg bg-white shadow">
-      <h3 class="font-bold text-xl mb-2 py-4 sticky top-0 bg-white z-10">System Warnings</h3>
-      <ul class="list-disc pl-5">
-        <li *ngFor="let warning of warningBuffer">{{ warning }}</li>
-      </ul>
-    </div>
-  </div>
-
-  <div class="flex flex-row w-full">
-    <div class="mt-10 w-[50%]">
-      <div class="flex flex-col w-full items-center justify-center text-gray-800">
-        <h2 class="font-bold text-2xl">
-          CPU Usage in %
-        </h2>
+        ></div>
       </div>
-      <div
-      echarts
-      [options]="cpuLineChartOptions"
-      [merge]="cpuMergedLineChartOption"
-      style="height: 400px; width: 100%;"
-      ></div>
-    </div>
-    <div class="mt-10 w-[50%]">
-      <div class="flex flex-col w-full items-center justify-center text-gray-800">
-        <h2 class="font-bold text-2xl">
-          RAM Usage in %
-        </h2>
+      <div class="mt-10 w-[50%]">
+        <div class="flex flex-col w-full items-center justify-center text-gray-800">
+          <h2 class="font-bold text-2xl">
+            RAM Usage in %
+          </h2>
+        </div>
+        <div
+        echarts
+        [options]="ramLineChartOptions"
+        [merge]="ramMergedLineChartOption"
+        style="height: 400px; width: 100%;"
+        ></div>
       </div>
-      <div
-      echarts
-      [options]="ramLineChartOptions"
-      [merge]="ramMergedLineChartOption"
-      style="height: 400px; width: 100%;"
-      ></div>
-    </div>
   </div>
 
   

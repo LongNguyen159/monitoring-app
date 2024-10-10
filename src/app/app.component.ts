@@ -8,11 +8,14 @@ import { MatButtonModule } from '@angular/material/button';
 import { LineChartComponent } from './components/line-chart/line-chart.component';
 import { NgxEchartsDirective, provideEcharts } from 'ngx-echarts';
 import { EChartsOption } from 'echarts';
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, CommonModule, MatSlideToggleModule, MatButtonModule, LineChartComponent, NgxEchartsDirective],
+  imports: [RouterOutlet, CommonModule, MatSlideToggleModule, MatButtonModule, LineChartComponent, NgxEchartsDirective,
+    FormsModule
+  ],
   providers: [provideEcharts()],
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss']
@@ -46,6 +49,14 @@ export class AppComponent implements OnInit, OnDestroy {
 
   // User credentials for login
   private userData = { userName: 'admin', password: 'admin123' };
+
+  loginData = {
+    userName: '',
+    password: ''
+  };
+
+  isLoggedIn = false;
+  loginFailed = false;
 
   constructor() {
     // Adding a dark theme to the body
@@ -287,17 +298,28 @@ export class AppComponent implements OnInit, OnDestroy {
   login(loginData: any): void {
     // Check user credentials (username & password)
     if (loginData.userName === this.userData.userName && loginData.password === this.userData.password) {
+      this.isLoggedIn = true;
+      this.loginFailed = false;
       console.log('Login successful');
     } else {
+      this.loginFailed = true;
       console.log('Username or Password is incorrect');
     }
   }
 
   saveResponseTimeBufferToFile(): void {
-    // Save the metrics buffer to a file
-    const data = this.metricsBuffer.map(metric => JSON.stringify(metric)).join('\n');
+    // User login information
+    const userInfo = `Logged in user: ${this.loginData.userName}\n`;
+  
+    // Metrics buffer data
+    const metricsData = this.metricsBuffer.map(metric => JSON.stringify(metric)).join('\n');
+  
+    // Combine user info with the metrics data
+    const data = userInfo + metricsData;
+  
+    // Create a blob for download
     const blob = new Blob([data], { type: 'text/plain' });
-
+  
     // Create a download link and trigger the download
     const a = document.createElement('a');
     const url = window.URL.createObjectURL(blob);
@@ -306,11 +328,12 @@ export class AppComponent implements OnInit, OnDestroy {
     
     document.body.appendChild(a);
     a.click();
-    
+  
     // Cleanup
     window.URL.revokeObjectURL(url);
     document.body.removeChild(a);
   }
+  
 
   ngOnDestroy(): void {
     console.log('AppComponent destroyed');
